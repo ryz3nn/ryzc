@@ -37,7 +37,7 @@ int main(int, char **) {
   // Select GL version + let the backend select a GLSL version
   const char *glsl_version = nullptr;
 #if defined(IMGUI_IMPL_OPENGL_ES2)
-  // GL ES 2.0 + GLSL 100 (WebGL 1.0)
+  // GL ES 2.0 + GLSL 100(WebGL 1.0)
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
   SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
