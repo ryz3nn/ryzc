@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/derek/projects/ryzc/build/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
