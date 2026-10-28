@@ -16,8 +16,9 @@ A lightweight ("or not") [GUI tool] built in C++20 to [my problem].
 
 ### Core Functionality
 - [x] Initial project setup (CMake + Nix flake environment)
-- [ ] Learn C++ 
-- [ ] Sample Dear ImGui app
+- [x] Learn C++ in Y Minute 
+- [x] Sample Dear ImGui app
+- [ ] Learn Dear ImGui by breakdown demo
 - [ ] Pak unpack 
 
 ### Future Goals
