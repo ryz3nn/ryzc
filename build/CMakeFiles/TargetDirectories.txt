@@ -1,3 +1,0 @@
-/home/derek/projects/ryzc/build/CMakeFiles/ryzc.dir
-/home/derek/projects/ryzc/build/CMakeFiles/edit_cache.dir
-/home/derek/projects/ryzc/build/CMakeFiles/rebuild_cache.dir
