@@ -51,6 +51,7 @@ target_compile_options(imgui PRIVATE -w)
 add_executable(ryzc
     src/main.cpp
     src/greeter.cpp
+    src/app.cpp
 )
 
 target_include_directories(ryzc PRIVATE

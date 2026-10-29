@@ -18,7 +18,9 @@ I'm very bad at organizing tools and folder, so i decided to put all my tools in
 - [x] Initial project setup (CMake + Nix flake environment)
 - [x] Learn C++ in Y Minute 
 - [x] Sample Dear ImGui app
-- [ ] Learn Dear ImGui by breakdown demo
+- [x] Learn Dear ImGui basic by breakdown demo
+    - [x] Make main.cpp concise 
+- [ ] Build UI and Starter template *
 
 ### Tools
 - [ ] Pak unpack 
