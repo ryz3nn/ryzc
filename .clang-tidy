@@ -1,0 +1,16 @@
+---
+Checks: >
+  -*,
+  cppcoreguidelines-*,
+  modernize-*,
+  bugprone-*,
+  readability-*,
+  -modernize-use-trailing-return-type,
+  -readability-magic-numbers,
+  -cppcoreguidelines-avoid-magic-numbers
+
+WarningsAsErrors: ''
+HeaderFilterRegex: '.*'
+
+CheckOptions:
+  cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor: true

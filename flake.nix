@@ -28,6 +28,8 @@
         gdb
 
 # 4. Libraries
+        sdl3
+        libGL
 
         ] ++ pkgs.lib.optionals pkgs.stdenv.isLinux [
 # Linux-only profiling / memory diagnosis
@@ -35,11 +37,8 @@
         ];
 
         shellHook = ''
+          export LD_LIBRARY_PATH=/run/opengl-driver/lib:$LD_LIBRARY_PATH
           echo "⚡ C++ Development Environment Loaded"
-          echo "Compiler: $(clang++ --version | head -n1)"
-          echo "CMake:    $(cmake --version | head -n1)"
-          echo "Ninja:    $(ninja --version)"
-          echo "----------------------------------------"
           '';
         };
     });
