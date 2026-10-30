@@ -1,33 +1,18 @@
 #pragma once
 
-#include <functional>
-#include <string_view>
+#include <stdint.h>
 
 struct SDL_Window;
-struct SDL_GLContextState;
+typedef struct SDL_GLContextState* SDL_GLContext;
 
 struct App {
-  explicit App(std::string_view title = "ryzc", int width = 1280,
-               int height = 800);
-  ~App();
+  SDL_Window* window = nullptr;
+  SDL_GLContext gl_context = nullptr;
+  bool is_running = false;
 
-  // Not allowed copy
-  App(const App&) = delete;
-  App& operator=(const App&) = delete;
-
-  // Allowed moving
-  App(App&& other) noexcept;            // Constructor by create new obejct
-  App& operator=(App&& other) noexcept; // Create by assign to exist object
-
-  // Check initialization succeeded or not
-  [[nodiscard]] bool is_valid() const noexcept { return is_initialized_; }
-
-  int run(const std::function<void()>& ui_callback);
-
-  void cleanup() noexcept;
-
-private:
-  SDL_Window* window_ = nullptr;
-  SDL_GLContextState* gl_context_ = nullptr;
-  bool is_initialized_ = false;
+  bool init(const char* title = "ryzc", int32_t width = 1280,
+            int32_t height = 800);
+  bool begin_frame();
+  void end_frame();
+  void shutdown();
 };

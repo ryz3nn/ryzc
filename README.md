@@ -1,6 +1,6 @@
 # ryzc
 
-A lightweight "or not" GUI tool built in C++20 to my problem.
+A lightweight "or not" GUI tool built in C++17 to solve my problem.
 
 > **Note:** This project is actively under development.
 
@@ -9,6 +9,12 @@ A lightweight "or not" GUI tool built in C++20 to my problem.
 ##  The Problem
 
 I'm very bad at organizing tools and folder, so i decided to put all my tools in this repo
+
+---
+
+## Resources
+- I came across a guy who changed completely changed how i think about programming - Eskil Steenberg.
+    * [Video you should watch!](https://www.youtube.com/watch?v=zqHdvT-vjA0&t=9s&pp=ygUPZXNraWwgc3RlZW5iZXJn)
 
 ---
 
@@ -27,4 +33,5 @@ I'm very bad at organizing tools and folder, so i decided to put all my tools in
 
 ### Pretending to be busy
 - [ ] Performance benchmarks
+    - [x] Benchmark between Normal and Unity build: small codebase make no diff. -> Useless, just tried in free time  
 - [ ] Unit & integration tests

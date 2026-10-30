@@ -15,17 +15,17 @@
         default = pkgs.mkShell.override { stdenv = pkgs.llvmPackages.stdenv; } {
         packages = with pkgs; [
 # 1. Build Orchestration & Compilers
+        pkg-config
         cmake
         ninja
-        pkg-config
 
 # 2. Language Server, Formatter & Linter
         llvmPackages.clang-tools  # provides clangd, clang-format, clang-tidy
-        cppcheck
 
 # 3. Debugging & Analysis
         lldb
         gdb
+        hyperfine
 
 # 4. Libraries
         sdl3

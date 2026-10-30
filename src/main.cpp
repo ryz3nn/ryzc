@@ -1,11 +1,20 @@
 #include "app.h"
 
 #include "imgui.h"
-#include "imgui_impl_opengl3_loader.h"
 
 int main() {
-  App app("ryzc", 1280, 800);
+  App app = {};
+  if (!app.init("ryzc", 1280, 800)) {
+    return 1;
+  }
 
   bool show_demo_window = true;
-  return app.run([&] { ImGui::ShowDemoWindow(&show_demo_window); });
+
+  while (app.begin_frame()) {
+    ImGui::ShowDemoWindow(&show_demo_window);
+    app.end_frame();
+  }
+
+  app.shutdown();
+  return 0;
 }
