@@ -4,102 +4,54 @@ Instructions and context for agents working in `ryzc`.
 
 ## Environment & Tooling (NixOS)
 
-- **NixOS Environment**: Non-FHS system. Never assume global library or header paths like `/usr/lib` or `/usr/include`. Run build and analysis commands inside `nix develop`.
-- **Graphics & Driver Hook**: Requires GPU driver access for OpenGL. `flake.nix` sets `LD_LIBRARY_PATH=/run/opengl-driver/lib:$LD_LIBRARY_PATH`. For systems with OpenGL < 3.0, enable software rendering via `LIBGL_ALWAYS_SOFTWARE=1` (handled automatically by `./run.sh`).
-- **Core Dependencies**:
-  - Build & Analysis: `cmake`, `ninja`, `pkg-config`, `clang-tools` (`clangd`, `clang-format`, `clang-tidy`), `cppcheck`
-  - Libraries: `SDL3`, `OpenGL` (`libGL`), Dear ImGui (bundled in `external/imgui`)
+- **NixOS Environment**: Non-FHS system. Never assume global library or header paths. Run build and analysis commands inside `nix develop`.
+- **GPU & Drivers**: Requires GPU driver access for OpenGL. `flake.nix` sets `LD_LIBRARY_PATH=/run/opengl-driver/lib:$LD_LIBRARY_PATH`. Software rendering fallback (`LIBGL_ALWAYS_SOFTWARE=1`) is handled automatically by `build.sh`.
+- **Core Dependencies**: `pkg-config`, `clang` / `clang++`, `clang-tools` (`clangd`, `clang-format`), `SDL3`, `libGL`, Dear ImGui (bundled in `external/imgui`).
 
 ## Developer Workflow
 
 Run inside `nix develop`:
 
-- **Configure**:
-  ```bash
-  cmake -B build -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-  ```
-- **Build**:
-  ```bash
-  ninja -C build
-  # or: cmake --build build --parallel
-  ```
-- **Run Executable**:
-  ```bash
-  ./build/ryzc
-  # or helper script: ./run.sh [debug|release]
-  ```
-- **Static Analysis & Linting** (must pass with zero warnings):
-  ```bash
-  # Clang-Tidy (checks cppcoreguidelines-*, modernize-*, bugprone-*, readability-*)
-  clang-tidy src/*.cpp -p build
+- **Build (Debug)**: `./build.sh`
+- **Build & Run**: `./build.sh run` (or release: `./build.sh release run`)
+- **Clean Build Artifacts**: `./build.sh clean`
+- **Format Code**: `clang-format -i src/*.cpp src/*.h`
 
-  # Cppcheck
-  cppcheck --project=build/compile_commands.json --enable=all --suppress=missingIncludeSystem
-  ```
-- **Format**:
-  ```bash
-  clang-format -i src/*.cpp src/*.h
-  ```
+## Architecture & Code Boundaries
 
-## Architecture & Project Structure
+- **Entrypoint & Frame Loop**: `src/main.cpp` drives the application lifecycle and frame loop directly.
+- **Third-Party Code Boundary**: ImGui code in `external/imgui` is third-party. Do not modify external ImGui headers or source unless explicitly instructed.
+- **Includes**: Search roots are `src/`, `include/`, `external/imgui`, and `external/imgui/backends`.
+- **Detailed Reference**: For extended portable C++ rationale and freestanding details, consult `docs/orthodox_cpp_guideline.md`.
 
-- **Entrypoint**: `src/main.cpp`.
-- **Target GUI**: Dear ImGui application using:
-  - Backends: `imgui_impl_sdl3` and `imgui_impl_opengl3`.
-  - Core: Static library compiled from `external/imgui`.
-- **Include Paths**: `include/` and `src/` are exposed as search roots via `CMakeLists.txt` (`#include <greeter.h>` or `#include "greeter.h"`).
-- **Third-Party Code Boundary**: ImGui code in `external/imgui` is third-party. Do not modify external ImGui headers or source unless explicitly instructed. Third-party warnings are suppressed in `CMakeLists.txt`; strict warnings apply to application code.
+## Orthodox C++ Code Rules
 
-## C++ Core Guidelines & Code Style
+Code must be readable to anyone familiar with the C language. If code does not require more complexity, do not add C++ abstractions. The end of design rationale in Orthodox C++ is: *"Quite simple, and it is usable. EOF."*
 
-The project targets **Modern C++20** with `-Wall -Wextra -Wpedantic`. All code must adhere to the **C++ Core Guidelines**.
+### 1. Memory Management & Lifecycles (No RAII)
+- **Procedural Lifecycles**: Use explicit lifecycle functions (`init()`, `shutdown()`, `reset()`). Never rely on constructor/destructor side effects, cascading destructions, or RAII wrappers for system resources.
+- **No Smart Pointers or `new`/`delete`**: Never use `std::unique_ptr`, `std::shared_ptr`, `new`, or `delete` (`operator new` links exception machinery even with `std::nothrow`). Use Arena allocators (`src/arena.h`) or `malloc`/`free`.
+- **Raw Pointers**: Pointers (`T*`) and references (`T&`) are non-owning, borrowed views. Verify pointers against `nullptr` when optional.
+- **Bulk Allocation & Memory Mapping**: For transient tasks, loading archives, or unpacking files (e.g. PAK files), allocate from a linear Arena or use `mmap`. Avoid repeated `seek` + `fread` loops and scattered heap allocations.
+- **Fail Fast**: If memory allocation fails on critical paths, call `abort()`. Never build complex unwinding or recovery cascades for heap exhaustion.
 
-### 1. Resource Management & Ownership (RAII)
-- **RAII everywhere**: Encapsulate every system resource (SDL windows, GL contexts, GPU textures, file descriptors, memory) inside an RAII owner.
-- **Smart pointers for ownership**:
-  - Use `std::unique_ptr` for single/exclusive ownership (allocate via `std::make_unique`).
-  - Use `std::shared_ptr` only when ownership is genuinely shared (allocate via `std::make_shared`).
-  - Never use raw `new` or `delete`.
-- **Raw pointers and references are non-owning**:
-  - Treat raw pointers (`T*`) and references (`T&`) strictly as non-owning, borrowed references.
-  - Assume references and raw pointers point to valid objects that outlive the caller; verify raw pointers against `nullptr` if optional.
-- **C API RAII wrappers**: Wrap SDL3 and OpenGL handles using custom deleters with `std::unique_ptr` or dedicated wrapper structs:
-  ```cpp
-  struct SDLWindowDeleter { void operator()(SDL_Window* w) const { SDL_DestroyWindow(w); } };
-  using WindowPtr = std::unique_ptr<SDL_Window, SDLWindowDeleter>;
-  ```
+### 2. Class Design & Data Structures
+- **Rule of Zero & POD Structs**: Prefer plain `struct`s with public data. Do not write copy/move constructors, assignment operators, or custom destructor hierarchies.
+- **Free Functions Over Methods**: Prefer standalone free functions over member methods with hidden `this` pointers unless state is strictly coupled.
+- **No Virtual Hierarchies or RTTI**: Ban `virtual` methods, C++ vtables, `dynamic_cast`, and `typeid`. Use simple structs, function pointers, or explicit enum type tags if polymorphism is required.
+- **No Private Fields**: Do not hide members behind `private` when passive public access keeps the code simple and directly testable.
 
-### 2. Interfaces & Function Design
-- **Parameter passing**:
-  - Pass cheap-to-copy types (primitives, small `struct` <= 16 bytes) by value.
-  - Pass read-only strings as `std::string_view`.
-  - Pass read-only contiguous sequences as `std::span<const T>`.
-  - Pass expensive-to-copy read-only types by `const T&`.
-  - Pass sink parameters (values consumed or moved into storage) by value and `std::move`.
-- **Return values**:
-  - Return by value and rely on RVO / move semantics.
-  - Avoid output parameters (`T& out`); return a `struct`, `std::pair`, or `std::tuple` and unpack with structured bindings (`auto [x, y] = ...`).
-  - Use `std::optional<T>` for functions that may fail or return no value.
-- **Const-correctness**:
-  - Mark member functions `const` whenever they do not alter observable object state.
-  - Mark immutable local variables and references `const`.
-- **Noexcept specification**: Mark destructors, swap functions, move constructors, and move assignment operators `noexcept`.
+### 3. Error Handling & Runtime Features
+- **No Exceptions**: Never throw, catch, or specify exceptions. Use return error codes, status enums, or boolean flags (`bool init(...)`). Do not use `std::expected` to emulate exceptions.
+- **No C++ Modules**: Use standard header files and translation units.
 
-### 3. Class Design & Types
-- **Rule of Zero / Five**:
-  - Prefer the **Rule of Zero**: design classes so default compiler-generated special member functions suffice by using RAII member types.
-  - If a custom destructor is required (Rule of Five), declare or explicitly delete all five special member functions (destructor, copy constructor, copy assignment, move constructor, move assignment).
-- **Constructors**:
-  - Mark all single-argument constructors `explicit` to prevent accidental implicit conversions.
-  - Initialize member variables at the point of declaration (in-class member initializers).
-- **Enums**: Use scoped `enum class` instead of plain `enum`.
-- **Structs vs Classes**:
-  - Use `struct` for passive data holders with public members and no class invariants.
-  - Use `class` when maintaining an invariant that requires encapsulation and private data.
+### 4. Standard Library & Includes
+- **C Runtime Headers**: Include C runtime headers directly (`<stdio.h>`, `<math.h>`, `<stdint.h>`, `<string.h>`). Do not use C++ wrappers (`<cstdio>`, `<cmath>`, `<cstdint>`).
+- **No Streams or Formatters**: Never use `<iostream>`, `std::cout`, `std::cin`, `<stringstream>`, `<format>`, or `std::format`. Use `printf`, `snprintf`, and `fprintf(stderr, ...)` for all text output.
+- **No Locale Dependencies**: Avoid `<cctype>` (it is locale-dependent, slow, and thread-unsafe). Write simple ASCII checks (e.g. `c >= 'A' && c <= 'Z'`) directly.
+- **No Allocating STL Containers**: Do not use `std::vector`, `std::string`, `std::map`, `<ranges>`, or other heap-allocating STL containers. Use fixed buffers, string slices (`std::string_view`), spans (`std::span`), Dear ImGui's `ImVector`, or custom Arena-backed arrays.
+- **No `std::function`**: Use plain C function pointers (`void (*fn)(void* user_data)`) with an explicit context pointer instead of `std::function` or heavy closures.
 
-### 4. Expressions, Statements & Modern C++20
-- **Initialization**: Always initialize variables at declaration. Prefer `auto` when the concrete type is repeated on the right-hand side (`auto win = std::make_unique<...>()`).
-- **Algorithms over raw loops**: Prefer standard library algorithms (`<algorithm>`, `std::ranges`) over manual index-based loops.
-- **Narrowing conversions**: Avoid implicit narrowing conversions; use explicit `static_cast` or brace-initialization `{}` to prevent truncation.
-- **Magic numbers**: Keep numbers with domain meaning in named `constexpr` constants (note: `.clang-tidy` allows magic numbers for quick GUI dimensions, but use named constants for core logic and physics).
-- **Clang-Tidy conformance**: Keep code clean of `cppcoreguidelines-*`, `modernize-*`, `bugprone-*`, and `readability-*` warnings as configured in `.clang-tidy`.
+### 5. Types & Integers
+- **Index with `size_t`**: Use `size_t` as the default for indexing, buffers, and sizes. Avoid signed `int` for memory offsets.
+- **Explicit Fixed-Width Integers**: Use fixed-width types from `<stdint.h>` (`uint32_t`, `int32_t`, `uint64_t`). Avoid `intmax_t` and `uintmax_t` due to ABI stability issues.
