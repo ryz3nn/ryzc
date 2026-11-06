@@ -5,6 +5,10 @@
 
 ## TODO
 - [ ] Simple GUI library
+    - [ ] Draw rect and text
+    - [ ] Label, button, checkbox, textbox
+    - [ ] Layout 
+    - [ ] ID stack, z-order,...
 - [ ] Unpack .pak file
 
 ## Resources

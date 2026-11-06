@@ -13,6 +13,8 @@ find_package(SDL3 REQUIRED CONFIG)
 
 add_executable(ryzc 
   src/main.c
+  src/gui/rui.c
+  src/gui/renderer.c
 )
 
 target_include_directories(ryzc PRIVATE 
