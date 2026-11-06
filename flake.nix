@@ -25,6 +25,7 @@
         ];
 
         buildInputs = with pkgs; [
+          # OpenGL
           sdl3
           libGL
         ];
