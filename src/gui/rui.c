@@ -17,7 +17,7 @@ void rui_end(rui_Context *ctx) {
   }
 }
 
-rui_Rect rui_create_rect(int32_t x, int32_t y, int32_t w, int32_t h) {
+rui_Rect rui_create_rect(float x, float y, float w, float h) {
   rui_Rect rect = {.x = x, .y = y, .w = w, .h = h};
   return rect;
 }

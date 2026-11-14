@@ -7,9 +7,9 @@
 #include <stdint.h>
 #include <stdio.h>
 
-static const char *vertex_src = "attribute vec3 a_position;\n"
+static const char *vertex_src = "attribute vec2 a_position;\n"
                                 "void main() {\n"
-                                "    gl_Position = vec4(a_position, 1.0);\n"
+                                "    gl_Position = vec4(a_position,0,1.0);\n"
                                 "}\n";
 
 static const char *fragment_src =
@@ -21,8 +21,9 @@ static const char *fragment_src =
 typedef struct {
   SDL_Window *window;
   SDL_GLContext context;
-  GLuint vbo;
   GLuint program;
+  GLuint vbo;
+  GLuint ebo;
 } UserData;
 
 bool init(UserData *);
@@ -31,7 +32,7 @@ void destroy(UserData *);
 
 UserData create_user_data(const char *, const char *);
 GLuint load_shader(GLenum, const char *);
-GLuint create_vbo(void);
+void create_buffer(UserData *);
 
 bool init(UserData *user_data) {
   SDL_Window *window;
@@ -120,26 +121,29 @@ GLuint create_program(const char *vertex_src, const char *fragment_src) {
   return program;
 }
 
-GLuint create_vbo(void) {
-  float vertices[] = {
-      -0.5, -0.5, 0.0, 0.5, -0.5, 0.0, 0.0, 0.5, 0.0,
-  };
-  GLuint vbo;
+void create_buffer(UserData *user_data) {
+  float vertices[] = {-0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5};
 
-  glGenBuffers(1, &vbo);
-  glBindBuffer(GL_ARRAY_BUFFER, vbo);
+  glGenBuffers(1, &user_data->vbo);
+  glBindBuffer(GL_ARRAY_BUFFER, user_data->vbo);
   glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-  return vbo;
+
+  GLushort indices[] = {0, 1, 3, 1, 2, 3};
+  glGenBuffers(1, &user_data->ebo);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, user_data->ebo);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
+               GL_STATIC_DRAW);
 }
 
 void draw(UserData *user_data) {
   GLint position = glGetAttribLocation(user_data->program, "a_position");
   glUseProgram(user_data->program);
   glBindBuffer(GL_ARRAY_BUFFER, user_data->vbo);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, user_data->ebo);
 
   glEnableVertexAttribArray(position);
-  glVertexAttribPointer(position, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
-  glDrawArrays(GL_TRIANGLES, 0, 3);
+  glVertexAttribPointer(position, 2, GL_FLOAT, GL_FALSE, 0, (void *)0);
+  glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, (void *)0);
   glDisableVertexAttribArray(position);
 }
 
@@ -159,7 +163,7 @@ int main(void) {
   }
 
   user_data.program = create_program(vertex_src, fragment_src);
-  user_data.vbo = create_vbo();
+  create_buffer(&user_data);
 
   while (running) {
     int w, h;

@@ -5,47 +5,17 @@
 #include <stdio.h>
 
 #include "gui/renderer.h"
-#include "gui/rui.h"
 
 int main(void) {
-  if (!SDL_Init(SDL_INIT_VIDEO)) {
-    fprintf(stderr, "SDL_Init: %s\n", SDL_GetError());
-    return 1;
-  }
-
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-
-  SDL_Window *window =
-      SDL_CreateWindow("ryzc UI - Rectangles Only", 800, 600,
-                       SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
-
-  if (!window) {
-    fprintf(stderr, "SDL_CreateWindow: %s\n", SDL_GetError());
-    SDL_Quit();
-    return 1;
-  }
-
-  SDL_GLContext context = SDL_GL_CreateContext(window);
-  if (!context) {
-    fprintf(stderr, "SDL_GL_CreateContext: %s\n", SDL_GetError());
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-    return 1;
-  }
-
-  SDL_GL_SetSwapInterval(1);
-
   rui_Context ui;
   rui_init(&ui);
 
-  if (!rui_renderer_init()) {
+  rui_renderer_BackendData bd;
+  bd.backend_type = RUI_RENDERER_GLES2;
+  bd.window_properties = (rui_renderer_WindowProperties){.name = "ryzc", .width = 800, .height = 600};
+
+  if (!rui_renderer_init(&bd)) {
     fprintf(stderr, "Failed to initialize rui renderer\n");
-    SDL_GL_DestroyContext(context);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
     return 1;
   }
 
@@ -60,7 +30,7 @@ int main(void) {
     }
 
     int width, height;
-    SDL_GetWindowSizeInPixels(window, &width, &height);
+    SDL_GetWindowSizeInPixels(bd.window, &width, &height);
 
     // 1. Build UI frame with rects
     rui_begin(&ui, width, height);
@@ -98,19 +68,12 @@ int main(void) {
     rui_end(&ui);
 
     // 2. Render
-    glViewport(0, 0, width, height);
-    glClearColor(0.10f, 0.12f, 0.15f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
+    
+    rui_renderer_draw(&ui, &bd);
 
-    rui_renderer_render(&ui);
-
-    SDL_GL_SwapWindow(window);
+    SDL_GL_SwapWindow(bd.window);
   }
 
-  rui_renderer_destroy();
-  SDL_GL_DestroyContext(context);
-  SDL_DestroyWindow(window);
-  SDL_Quit();
-
+  rui_renderer_destroy(&bd);
   return 0;
 }

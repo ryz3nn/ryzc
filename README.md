@@ -1,14 +1,15 @@
 # ryzc
-### I want to write GUI toolkit from scratch but nah i'm lazy, i stick with SDL3 and GLES 2.0
+### I want to write GUI toolkit from scratch but nah i'm lazy, i stick with SDL3 and GLES 2.0. I'm currently studying microui and dearimgui.
 
 ## Features
 
 ## TODO
 - [ ] Simple GUI library
-    - [ ] Draw rect and text
-    - [ ] Label, button, checkbox, textbox
-    - [ ] Layout 
-    - [ ] ID stack, z-order,...
+    - [x] Draw rect
+    - [ ] Simple layout
+    - [ ] Text
+    - [ ] Label, button, checkbox, textbox, ....
+    - [ ] More layout
 - [ ] Unpack .pak file
 
 ## Resources
