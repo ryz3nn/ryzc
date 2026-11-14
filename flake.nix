@@ -22,9 +22,11 @@
           lld
           clang-tools
           lldb
+          gdb
         ];
 
         buildInputs = with pkgs; [
+          # OpenGL
           sdl3
           libGL
         ];
