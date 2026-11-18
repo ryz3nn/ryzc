@@ -8,7 +8,7 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
-find_package(OpenGL REQUIRED)
+find_package(OpenGL REQUIRED COMPONENTS GLES2)
 find_package(SDL3 REQUIRED CONFIG)
 
 add_executable(ryzc 
@@ -29,6 +29,6 @@ target_compile_options(ryzc PRIVATE
 )
 
 target_link_libraries(ryzc PRIVATE
-  OpenGL::GL
+  OpenGL::GLES2
   SDL3::SDL3
 )
